@@ -32,6 +32,10 @@ _Avoid_: portfolio, homepage, link
 The year a Member graduated from, expects to graduate from, or left the School (for example, the year they transferred out); the Directory's grouping key. A current student's best guess, which they may update later.
 _Avoid_: class, cohort, year
 
+**Standing**:
+A Member's optional note on how they relate to the School: Graduated, Transferred (moved to another school), or Attended (took classes and left without graduating or transferring). Current students have none; their Graduation Year is in the future.
+_Avoid_: enrolment
+
 **Maintainer**:
 The person who reviews and merges Member submissions. A single person for now.
 _Avoid_: admin, owner, moderator
