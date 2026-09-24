@@ -1,0 +1,156 @@
+<!doctype html>
+<!--
+  PROTOTYPE, THROWAWAY. Lives on branch prototype/ring-widget-look, never on main.
+  Question: should CONTRIBUTING offer an optional styled Ring Widget, and what should it look like?
+  Four variants of the paste-in widget, switchable via ?variant=A|B|C|D (bottom bar or arrow keys),
+  each shown on four fake Member Sites of very different styles. Every Site is an isolated iframe
+  with its own CSS, so the Site's rules hit the widget exactly as they would in real life.
+    A  Unstyled   the decided baseline: four plain links in a <nav>
+    B  Adaptive   <style> block: keeps the Site's font and colours, adds layout + a yellow rule
+    C  Badge      inline style attributes only: a self-contained yellow chip
+    D  Strip      <style> block: its own zinc panel, light/dark aware, wordmark + yellow edge
+  No external files in any variant. Links are disabled inside the frames.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ring Widget look (prototype)</title>
+<style>
+  :root { color-scheme: light dark; --bg: #fafafa; --fg: #18181b; --muted: #52525b; --line: #e4e4e7; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #09090b; --fg: #f4f4f5; --muted: #a1a1aa; --line: #27272a; } }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, sans-serif; }
+  header, main { max-width: 1280px; margin: 0 auto; padding: 1.25rem; }
+  h1 { font-size: 1.25rem; margin: 0 0 .25rem; }
+  .grid { display: grid; grid-template-columns: 1fr; gap: 1.25rem; }
+  @media (min-width: 900px) { .grid { grid-template-columns: 1fr 1fr; } }
+  figure { margin: 0; }
+  figcaption { font-size: 13px; color: var(--muted); margin-bottom: .35rem; }
+  iframe { width: 100%; height: 360px; border: 1px solid var(--line); background: #fff; }
+  pre { background: var(--line); padding: 1rem; overflow: auto; font-size: 12px; white-space: pre-wrap; word-break: break-all; }
+  .proto { position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); z-index: 30; display: flex; align-items: center; gap: .25rem; background: #111; color: #fff; border: 2px dashed #e879f9; border-radius: 999px; padding: .25rem; font: 600 13px/1 system-ui, sans-serif; box-shadow: 0 8px 30px rgb(0 0 0 / .35); }
+  .proto button { background: none; color: #fff; border: 0; width: 34px; height: 34px; border-radius: 999px; cursor: pointer; font-size: 16px; }
+  .proto button:hover { background: #333; }
+  .proto span { padding: 0 .75rem; white-space: nowrap; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Ring Widget look (prototype)</h1>
+  <div id="about"></div>
+</header>
+<main>
+  <div class="grid" id="sites"></div>
+  <h2 style="font-size:1rem;margin:2rem 0 .5rem">What the Member pastes (<span id="size"></span>)</h2>
+  <pre id="code"></pre>
+  <div style="height:5rem"></div>
+</main>
+<nav class="proto" aria-label="Prototype variant switcher">
+  <button type="button" id="prev" aria-label="Previous variant">&larr;</button>
+  <span id="vlabel"></span>
+  <button type="button" id="next" aria-label="Next variant">&rarr;</button>
+</nav>
+
+<script>
+const BASE = "https://jpierre-7.github.io/eagle-ring";
+const SLUG = "kevin-tran";
+const url = { prev: `${BASE}/ring/${SLUG}/prev`, home: `${BASE}/`, random: `${BASE}/ring/random?from=${SLUG}`, next: `${BASE}/ring/${SLUG}/next` };
+const NAV = `class="eagle-ring" aria-label="Eagle Ring webring"`;
+
+const VARIANTS = {
+  A: { name: "Unstyled", about: "The decided baseline. Inherits everything from the Site, including rules the Site aimed at other things.",
+    html: () => `<nav ${NAV}>
+  <a href="${url.prev}">&larr; Previous</a>
+  <a href="${url.home}">Eagle Ring</a>
+  <a href="${url.random}">Random</a>
+  <a href="${url.next}">Next &rarr;</a>
+</nav>` },
+
+  B: { name: "Adaptive", about: "A <style> block keyed on .eagle-ring. Keeps the Site's font and text colour, resets rules the Site aimed at nav and a, adds a row layout and one yellow rule.",
+    html: () => `<style>
+.eagle-ring{all:unset;display:flex;flex-wrap:wrap;align-items:baseline;gap:.25rem 1.25rem;margin:2rem 0;padding:.75rem 0 0;border-top:3px solid #facc15;font:inherit;color:inherit}
+.eagle-ring a{all:unset;cursor:pointer;color:inherit;text-decoration:underline;text-decoration-color:#facc15;text-decoration-thickness:2px;text-underline-offset:3px}
+.eagle-ring a::before,.eagle-ring a::after{content:none}
+.eagle-ring a:focus-visible{outline:3px solid #facc15;outline-offset:2px}
+.eagle-ring .er-home{font-weight:800}
+</style>
+<nav ${NAV}>
+  <a href="${url.prev}">&larr; Previous</a>
+  <a class="er-home" href="${url.home}">Eagle Ring</a>
+  <a href="${url.random}">Random</a>
+  <a href="${url.next}">Next &rarr;</a>
+</nav>` },
+
+  C: { name: "Badge", about: "Inline style attributes only, no <style> block. A self-contained yellow chip with near-black text, so it reads on any background. Inline styles cannot beat a Site's ::before rules or !important.",
+    html: () => {
+      const a = `color:#18181b;background:none;text-decoration:none;text-transform:none;padding:7px 10px;display:block`;
+      const div = `border-left:2px solid #18181b`;
+      return `<nav ${NAV} style="all:unset;display:inline-flex;position:static;margin:1.5rem 0;background:#facc15;border:2px solid #18181b;font:700 14px/1 system-ui,sans-serif">
+  <a style="${a}" href="${url.prev}" aria-label="Previous Site">&larr;</a>
+  <a style="${a};${div};font-weight:900" href="${url.home}">Eagle Ring</a>
+  <a style="${a};${div}" href="${url.random}">Random</a>
+  <a style="${a};${div}" href="${url.next}" aria-label="Next Site">&rarr;</a>
+</nav>`; } },
+
+  D: { name: "Strip", about: "A <style> block with its own zinc panel that follows the visitor's light/dark setting, a yellow edge, and the wordmark. Looks the same on every Site.",
+    html: () => `<style>
+.eagle-ring{all:unset;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.5rem 1.5rem;margin:2rem 0;padding:.75rem 1rem;background:#fafafa;color:#18181b;border:1px solid #e4e4e7;border-left:6px solid #facc15;font:500 14px/1.4 system-ui,sans-serif}
+.eagle-ring a{all:unset;cursor:pointer;color:inherit;text-decoration:underline;text-underline-offset:3px}
+.eagle-ring a::before,.eagle-ring a::after{content:none}
+.eagle-ring a:focus-visible{outline:3px solid #facc15;outline-offset:2px}
+.eagle-ring .er-home{font-weight:900;font-size:16px;text-decoration:none}
+.eagle-ring span{display:flex;gap:1rem}
+@media (prefers-color-scheme:dark){.eagle-ring{background:#18181b;color:#f4f4f5;border-color:#27272a}}
+</style>
+<nav ${NAV}>
+  <a class="er-home" href="${url.home}">Eagle Ring</a>
+  <span><a href="${url.prev}">&larr; Previous</a><a href="${url.random}">Random</a><a href="${url.next}">Next &rarr;</a></span>
+</nav>` },
+};
+
+// Four fake Member Sites. Their CSS is deliberately realistic, including rules that
+// target every nav and every a, which is what the widget must survive.
+const SITES = [
+  { name: "Plain HTML, browser defaults", css: `body{margin:2rem;font-family:serif}`,
+    body: `<h1>Kevin Tran</h1><p>Data analyst. I plot things in R. Here are my <a href="#">projects</a>.</p>` },
+  { name: "Dark terminal theme (styles every a with a > prefix)", css: `body{margin:0;padding:2rem;background:#0b0f0c;color:#8ef58e;font:14px/1.6 "Courier New",monospace}a{color:#8ef58e}a::before{content:"> "}h1{font-size:18px}h1::after{content:"_";animation:b 1s steps(1) infinite}@keyframes b{50%{opacity:0}}`,
+    body: `<h1>~/kevin-tran</h1><p>$ cat about.txt<br>data analyst. plots things in R.</p><p><a href="#">projects</a> <a href="#">resume</a></p>` },
+  { name: "Serif blog, follows light/dark", css: `body{margin:0;padding:2rem 2.5rem;background:#fffdf7;color:#222;font:18px/1.7 Georgia,serif;max-width:36rem}a{color:#8b1e1e}h1{font-weight:400;font-style:italic}@media (prefers-color-scheme:dark){body{background:#15130f;color:#e8e2d4}a{color:#e79a8a}}`,
+    body: `<h1>Notes from a data analyst</h1><p>Most of my week is cleaning spreadsheets. This is where I write about the parts that were interesting.</p>` },
+  { name: "Busy portfolio (every nav is a sticky header)", css: `body{margin:0;background:linear-gradient(135deg,#ff4d8d,#7b2ff7);color:#fff;font:600 16px/1.5 system-ui,sans-serif;min-height:100vh}nav{position:sticky;top:0;display:flex;justify-content:flex-end;gap:2rem;padding:1rem 2rem;background:rgb(0 0 0 / .6);backdrop-filter:blur(6px)}nav a,a{color:#fff;text-transform:uppercase;letter-spacing:.1em;text-decoration:none;font-size:13px}.hero{padding:3rem 2rem}.hero h1{font-size:44px;line-height:1;margin:0 0 1rem}`,
+    body: `<nav><a href="#">Work</a><a href="#">About</a><a href="#">Contact</a></nav><div class="hero"><h1>KEVIN<br>TRAN</h1><p>Data, dashboards, and the occasional side project.</p></div>` },
+];
+
+const KEYS = Object.keys(VARIANTS);
+let variant = new URLSearchParams(location.search).get("variant");
+if (!VARIANTS[variant]) variant = "A";
+const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const NOCLICK = `<script>document.addEventListener("click",e=>{if(e.target.closest("a"))e.preventDefault()})<\/script>`;
+
+function render() {
+  const v = VARIANTS[variant], widget = v.html();
+  document.getElementById("vlabel").textContent = `${variant} (${v.name})`;
+  document.getElementById("about").innerHTML = `<p style="margin:0;color:var(--muted)">${esc(v.about)}</p>`;
+  document.getElementById("code").textContent = widget;
+  document.getElementById("size").textContent = `${new Blob([widget]).size} bytes`;
+  document.getElementById("sites").innerHTML = SITES.map((s, i) => `<figure><figcaption>${esc(s.name)}</figcaption><iframe id="f${i}" title="${esc(s.name)}" sandbox="allow-scripts"></iframe></figure>`).join("");
+  SITES.forEach((s, i) => {
+    document.getElementById(`f${i}`).srcdoc = `<!doctype html><html><head><meta charset="utf-8"><meta name="color-scheme" content="light dark"><style>${s.css}</style></head><body>${s.body}<footer style="padding:0 2rem">${widget}</footer>${NOCLICK}</body></html>`;
+  });
+}
+function go(step) {
+  variant = KEYS[(KEYS.indexOf(variant) + step + KEYS.length) % KEYS.length];
+  const u = new URL(location.href); u.searchParams.set("variant", variant); history.replaceState(null, "", u);
+  render();
+}
+document.getElementById("prev").onclick = () => go(-1);
+document.getElementById("next").onclick = () => go(1);
+addEventListener("keydown", e => {
+  if (e.target.closest("input, textarea, [contenteditable]")) return;
+  if (e.key === "ArrowLeft") go(-1);
+  if (e.key === "ArrowRight") go(1);
+});
+render();
+</script>
+</body>
+</html>
