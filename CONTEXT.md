@@ -21,7 +21,7 @@ A small embeddable snippet a Member can add to their own Site that links to the 
 _Avoid_: ring, nav, badge
 
 **Member**:
-A current CS student or CS alumnus of the School whose Site is listed in the Directory.
+A person who takes or took CS coursework at the School (a School degree is not required) and whose Site is listed in the Directory.
 _Avoid_: user, entry, participant
 
 **Site**:
@@ -29,7 +29,7 @@ A Member's personal website, the thing the Directory links to.
 _Avoid_: portfolio, homepage, link
 
 **Graduation Year**:
-The year a Member graduated or expects to graduate from the School; the Directory's grouping key.
+The year a Member graduated from, expects to graduate from, or left the School (for example, the year they transferred out); the Directory's grouping key. A current student's best guess, which they may update later.
 _Avoid_: class, cohort, year
 
 **Maintainer**:
