@@ -46,7 +46,8 @@ This spec is the handoff from the planning map [Eagle Ring — v1 spec](https://
 *Source: [Research: Astro on GitHub Pages — base path, redirects, custom-domain migration](https://github.com/jpierre-7/eagle-ring/issues/4) (full write-up on branch `research/astro-github-pages`).*
 
 - **Astro**, static output, no adapter. **Tailwind v4** through its Vite plugin. No React or other UI framework; interactivity is small inline scripts.
-- **Fonts:** Cabinet Grotesk (display and body) and JetBrains Mono (Site domains, metadata), both self-hosted with `@font-face` and `font-display: swap`. No Google Fonts `<link>` in production.
+- **Fonts:** Bricolage Grotesque (display and body, variable, weights 200–800) and JetBrains Mono (Site domains, metadata), both under the SIL Open Font License and self-hosted with `@font-face` and `font-display: swap`, licence files alongside. No Google Fonts `<link>` in production. The heaviest weight is 800; the Graduation Year numerals use it.
+- **Font licences:** every font committed to the repo must allow redistribution (OFL or similar), because the repo is public and forkable. Cabinet Grotesk, the original choice, was dropped for this reason: its licence forbids distribution through a repository.
 - **Icons:** Phosphor, the framework-free package.
 
 ### `astro.config.mjs`
@@ -208,9 +209,9 @@ Names the Maintainer for everything. Handing the ring over to a club later is a 
 
 ### Design rules
 
-`design-taste-frontend` governs all design work. Its brief is this design read, which is not re-derived:
+`design-taste-frontend` governs all design work. Its brief is this design read, which is not re-derived (the display face was changed from Cabinet Grotesk to Bricolage Grotesque for licensing; everything else is as decided):
 
-> Reading this as: a community Directory for Houston City College CS students and alumni, with a homegrown, proud, lively language, leaning toward Astro + Tailwind v4 + native CSS, Cabinet Grotesk display with JetBrains Mono, and one signal-yellow accent on zinc neutrals in auto light/dark.
+> Reading this as: a community Directory for Houston City College CS students and alumni, with a homegrown, proud, lively language, leaning toward Astro + Tailwind v4 + native CSS, Bricolage Grotesque display with JetBrains Mono, and one signal-yellow accent on zinc neutrals in auto light/dark.
 
 - **Dials:** DESIGN_VARIANCE 6, MOTION_INTENSITY 3 (CSS transitions only, all gated on `prefers-reduced-motion`), VISUAL_DENSITY 5.
 - **Palette:** zinc off-white and off-black neutrals, one signal yellow (`#facc15`). In light mode yellow is only a fill (highlights, selection, focus ring, the Random Site button with near-black text), **never text**. Yellow text is allowed in dark mode.
