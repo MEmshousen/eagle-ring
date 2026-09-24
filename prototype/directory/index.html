@@ -1,0 +1,321 @@
+<!doctype html>
+<!--
+  PROTOTYPE, THROWAWAY. Lives on branch prototype/directory, never on main.
+  Question: is this the Directory direction, and what changes?
+  Three variants of the Directory page, switchable via ?variant=A|B|C
+  (or the bar at the bottom, or the left/right arrow keys).
+    A  Year bands   big Graduation Year numeral beside a Member grid (the decided layout)
+    B  Roster       one row per Member, two-digit jersey numeral on every row
+    C  Poster       names set large and flowing; details on hover/focus in a side panel
+  All Members below are FAKE. Random does not navigate (the Sites don't exist).
+  Rendering is client-side here for speed; production renders the list at build
+  time so the Directory works without JS.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eagle Ring Directory (prototype)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700,800,900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1"></script>
+<style>
+:root {
+  --bg: #fafafa; --fg: #18181b; --muted: #52525b; --line: #e4e4e7; --soft: #f4f4f5;
+  --accent: #facc15; --on-accent: #18181b; --accent-text: #18181b;
+  --display: "Cabinet Grotesk", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #09090b; --fg: #f4f4f5; --muted: #a1a1aa; --line: #27272a; --soft: #18181b; --accent-text: #facc15; }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 500 1.0625rem/1.55 var(--display); }
+a { color: inherit; }
+::selection { background: var(--accent); color: var(--on-accent); }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.mono { font-family: var(--mono); font-size: .8125rem; font-weight: 400; }
+.muted { color: var(--muted); }
+.wrap { max-width: 1280px; margin: 0 auto; padding: 0 1.25rem; }
+@media (min-width: 768px) { .wrap { padding: 0 2.5rem; } }
+
+/* shared chrome */
+.top { display: flex; align-items: center; justify-content: space-between; height: 68px; border-bottom: 1px solid var(--line); }
+.wordmark { font-weight: 900; font-size: 1.375rem; letter-spacing: -.02em; text-decoration: none; }
+.join { font-weight: 700; text-decoration: none; background: linear-gradient(var(--accent), var(--accent)) 0 100% / 100% 3px no-repeat; padding-bottom: 2px; }
+.intro { padding: 3.5rem 0 2rem; }
+.intro h1 { font-weight: 800; font-size: clamp(2rem, 5vw, 3.75rem); line-height: 1.02; letter-spacing: -.03em; margin: 0 0 .75rem; max-width: 20ch; }
+.controls { display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; align-items: end; padding-bottom: 2rem; border-bottom: 1px solid var(--line); }
+.field { display: grid; gap: .375rem; flex: 1 1 18rem; max-width: 26rem; }
+.field label { font-size: .875rem; font-weight: 700; }
+.field input { font: 500 1rem var(--display); color: var(--fg); background: var(--bg); border: 2px solid var(--fg); border-radius: 0; padding: .6rem .75rem; min-height: 44px; }
+.field input::placeholder { color: var(--muted); }
+.seg { display: inline-flex; border: 2px solid var(--fg); }
+.seg button { font: 700 .9375rem var(--display); background: transparent; color: var(--fg); border: 0; padding: .55rem 1rem; min-height: 44px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.random { display: inline-flex; gap: .5rem; align-items: center; font: 800 1rem var(--display); background: var(--accent); color: var(--on-accent); border: 2px solid var(--accent); border-radius: 0; padding: .55rem 1.1rem; min-height: 44px; cursor: pointer; }
+.random i { font-size: 1.2rem; }
+@media (prefers-reduced-motion: no-preference) {
+  .random, .row, .m-name, .poster a { transition: transform .15s ease, background-color .15s ease, background-size .2s ease; }
+  .random:active { transform: translateY(1px); }
+}
+.empty { padding: 4rem 0; }
+.empty p { font-size: 1.5rem; font-weight: 700; margin: 0 0 1rem; }
+.empty button { font: 700 1rem var(--display); background: none; color: var(--fg); border: 2px solid var(--fg); padding: .5rem 1rem; cursor: pointer; }
+footer { border-top: 1px solid var(--line); margin-top: 5rem; padding: 2rem 0 7rem; display: flex; flex-wrap: wrap; gap: .5rem 2rem; justify-content: space-between; }
+.flash { background: var(--accent) !important; color: var(--on-accent) !important; }
+.flash * { color: var(--on-accent) !important; }
+.toast { position: fixed; top: 1rem; left: 50%; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: .75rem 1rem; display: flex; gap: 1rem; align-items: center; z-index: 20; max-width: calc(100% - 2rem); }
+.toast a { color: var(--accent); font-weight: 800; }
+
+/* A: year bands */
+.band { display: grid; grid-template-columns: 1fr; gap: 1rem 3rem; padding: 2.5rem 0; border-bottom: 1px solid var(--line); }
+@media (min-width: 900px) { .band { grid-template-columns: 15rem 1fr; } }
+.band-year .num { display: block; font-weight: 900; font-size: clamp(4rem, 9vw, 7.5rem); line-height: .85; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.band-year .state { display: block; margin-top: .5rem; }
+.band-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr; gap: 2rem 2.5rem; align-content: start; }
+@media (min-width: 640px) { .band-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1100px) { .band-grid { grid-template-columns: repeat(3, 1fr); } }
+.m { padding: .25rem; margin: -.25rem; }
+.m-name { font-weight: 800; font-size: 1.375rem; line-height: 1.15; text-decoration: none; background: linear-gradient(var(--accent), var(--accent)) 0 100% / 0 40% no-repeat; }
+.m-name:hover { background-size: 100% 40%; }
+@media (prefers-color-scheme: dark) { .m-name:hover { background: none; color: var(--accent-text); } }
+.m-site { display: block; margin-top: .25rem; word-break: break-all; }
+.m-tag { margin: .5rem 0 .375rem; color: var(--muted); max-width: 34ch; }
+.m-gh { color: var(--muted); text-decoration: none; }
+.m-gh:hover { text-decoration: underline; }
+
+/* B: roster */
+.roster { list-style: none; margin: 0; padding: 0; }
+.row { position: relative; display: grid; grid-template-columns: 4.25rem 1fr; gap: .25rem 1.25rem; align-items: baseline; padding: 1.1rem .5rem; border-bottom: 1px solid var(--line); }
+@media (min-width: 900px) { .row { grid-template-columns: 6rem minmax(0, 1.4fr) minmax(0, 1fr) 11rem; } }
+.row.break { border-top: 3px solid var(--fg); }
+.row:hover { background: var(--soft); }
+.jersey { font-weight: 900; font-size: 2.75rem; line-height: .9; letter-spacing: -.04em; font-variant-numeric: tabular-nums; grid-row: span 3; }
+@media (min-width: 900px) { .jersey { grid-row: auto; } }
+.row .n { font-weight: 800; font-size: 1.5rem; line-height: 1.15; text-decoration: none; }
+.row .n::after { content: ""; position: absolute; inset: 0; }
+.row .n:hover { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 4px; }
+.row .t { display: block; color: var(--muted); font-size: 1rem; margin-top: .125rem; }
+.row .s { word-break: break-all; }
+.row .g { position: relative; z-index: 1; color: var(--muted); text-decoration: none; }
+.row .g:hover { text-decoration: underline; }
+@media (max-width: 899px) { .row .s, .row .g { grid-column: 2; } }
+
+/* C: poster */
+.poster-wrap { display: grid; grid-template-columns: 1fr; gap: 3rem; padding-top: 2.5rem; }
+@media (min-width: 900px) { .poster-wrap { grid-template-columns: 1fr 20rem; } }
+.pyear { margin: 0 0 3rem; }
+.patch { display: inline-block; background: var(--accent); color: var(--on-accent); font-weight: 900; font-size: 1.75rem; line-height: 1; padding: .35rem .6rem .25rem; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.patch + .mono { margin-left: .75rem; }
+.poster { font-weight: 800; font-size: clamp(1.75rem, 4.2vw, 3.25rem); line-height: 1.12; letter-spacing: -.025em; margin: 1rem 0 0; }
+.poster a { text-decoration: none; }
+.poster a:hover, .poster a:focus-visible, .poster a.on { color: var(--muted); }
+@media (prefers-color-scheme: dark) { .poster a:hover, .poster a:focus-visible, .poster a.on { color: var(--accent-text); } }
+.poster .sep { color: var(--line); font-weight: 500; }
+.poster sup { font: 400 .8rem var(--mono); color: var(--muted); vertical-align: super; margin-left: .15em; }
+.poster .d { display: none; font: 400 .8125rem/1.3 var(--mono); color: var(--muted); letter-spacing: 0; }
+@media (max-width: 899px) { .poster .d { display: block; margin-bottom: .5rem; } .poster .sep { display: none; } .poster a { display: block; } .panel { display: none; } }
+.panel { position: sticky; top: 2rem; align-self: start; border-top: 3px solid var(--fg); padding-top: 1rem; min-height: 14rem; }
+.panel h2 { font-size: 1.75rem; line-height: 1.1; margin: .25rem 0 .5rem; font-weight: 800; }
+.panel p { color: var(--muted); margin: .5rem 0; }
+
+/* prototype switcher: deliberately NOT part of the design */
+.proto { position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); z-index: 30; display: flex; align-items: center; gap: .25rem; background: #111; color: #fff; border: 2px dashed #e879f9; border-radius: 999px; padding: .25rem; font: 600 13px/1 system-ui, sans-serif; box-shadow: 0 8px 30px rgb(0 0 0 / .35); }
+.proto button { background: none; color: #fff; border: 0; width: 34px; height: 34px; border-radius: 999px; cursor: pointer; font-size: 16px; }
+.proto button:hover { background: #333; }
+.proto span { padding: 0 .75rem; white-space: nowrap; }
+</style>
+</head>
+<body>
+<header class="wrap top">
+  <a class="wordmark" href="#">Eagle Ring</a>
+  <a class="join" href="#contributing">Join the ring</a>
+</header>
+
+<main class="wrap">
+  <section class="intro">
+    <h1>Personal sites from Houston City College CS students, past and present.</h1>
+    <p class="mono muted" id="count"></p>
+  </section>
+
+  <div class="controls">
+    <div class="field">
+      <label for="q">Search Members</label>
+      <input id="q" type="search" placeholder="Name, Site, year, or GitHub" autocomplete="off">
+    </div>
+    <div class="seg" role="group" aria-label="Order">
+      <button type="button" data-mode="year" aria-pressed="true">By year</button>
+      <button type="button" data-mode="az" aria-pressed="false">A-Z</button>
+    </div>
+    <button type="button" class="random" id="random"><i class="ph-bold ph-shuffle" aria-hidden="true"></i>Random Site</button>
+  </div>
+
+  <div id="out" aria-live="polite"></div>
+</main>
+
+<footer class="wrap mono muted">
+  <span>Eagle Ring is unofficial and student-run. Not affiliated with Houston City College.</span>
+  <a href="#">Source on GitHub</a>
+</footer>
+
+<nav class="proto" aria-label="Prototype variant switcher">
+  <button type="button" id="prev" aria-label="Previous variant">&larr;</button>
+  <span id="vlabel"></span>
+  <button type="button" id="next" aria-label="Next variant">&rarr;</button>
+</nav>
+
+<script>
+// FAKE Members. Shape follows the Member schema decision: name, site, graduationYear, github, optional tagline.
+const MEMBERS = [
+  { slug: "aaliyah-brooks", name: "Aaliyah Brooks", site: "https://aaliyahbrooks.dev/", graduationYear: 2023, github: "aaliyahb", tagline: "Backend developer at a Houston logistics startup." },
+  { slug: "minh-anh-nguyen", name: "Minh Anh Nguyen", site: "https://minhanh.github.io/", graduationYear: 2025, github: "minhanh-ng", tagline: "Transferred to UH. Building a bus-arrival app for METRO riders." },
+  { slug: "daniela-ortiz", name: "Daniela Ortiz", site: "https://danielaortiz.me/", graduationYear: 2027, github: "dortiz-codes", tagline: "First-year CS student. Learning Rust." },
+  { slug: "obinna-eze", name: "Obinna Eze", site: "https://obinnaeze.com/", graduationYear: 2019, github: "obinnaeze", tagline: "Site reliability engineer. Used to tutor in the CS lab." },
+  { slug: "priya-raman", name: "Priya Raman", site: "https://praman.github.io/portfolio/", graduationYear: 2025, github: "praman" },
+  { slug: "marcus-thibodeaux", name: "Marcus Thibodeaux", site: "https://marcust.dev/", graduationYear: 2019, github: "mthibodeaux", tagline: "Game developer. Mostly Godot." },
+  { slug: "sofia-castaneda", name: "Sofía Castañeda", site: "https://sofiacastaneda.dev/", graduationYear: 2027, github: "sofcast", tagline: "Into web accessibility and screen readers." },
+  { slug: "kevin-tran", name: "Kevin Tran", site: "https://kevintran.github.io/", graduationYear: 2023, github: "kvtran", tagline: "Data analyst. Plots things in R." },
+  { slug: "hamza-siddiqui", name: "Hamza Siddiqui", site: "https://hamza.codes/", graduationYear: 2025, github: "hsiddiqui", tagline: "Security student. CTF writeups on the blog." },
+  { slug: "lupe-garza", name: "Lupe Garza", site: "https://lupegarza.net/", graduationYear: 2023, github: "lupegarza" },
+  { slug: "rafael-mendoza", name: "Rafael Mendoza", site: "https://rafaelmendoza.github.io/site/", graduationYear: 2027, github: "rafa-mendoza", tagline: "Evening student with a day job in IT support. Building a homelab on old laptops." },
+  { slug: "jada-okafor", name: "Jada Okafor", site: "https://jadaokafor.dev/", graduationYear: 2025, github: "jadaokafor", tagline: "Frontend developer. Likes CSS more than most people do." },
+];
+const NOW = 2026;
+const VARIANTS = { A: "Year bands", B: "Roster", C: "Poster" };
+const KEYS = Object.keys(VARIANTS);
+
+const state = { q: "", mode: "year", variant: new URLSearchParams(location.search).get("variant") || "A" };
+if (!VARIANTS[state.variant]) state.variant = "A";
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const host = url => url.replace(/^https:\/\//, "").replace(/\/$/, "");
+const two = y => String(y).slice(-2);
+const yearState = y => y > NOW ? "expected" : y === NOW ? "this year" : "graduated or left";
+const byName = (a, b) => a.name.localeCompare(b.name);
+
+function filtered() {
+  const q = state.q.trim().toLowerCase();
+  const list = MEMBERS.filter(m => !q || [m.name, host(m.site), m.github, m.tagline || "", m.graduationYear].join(" ").toLowerCase().includes(q));
+  return state.mode === "az" ? list.sort(byName) : list.sort((a, b) => b.graduationYear - a.graduationYear || byName(a, b));
+}
+function groups(list) {
+  const g = new Map();
+  list.forEach(m => { if (!g.has(m.graduationYear)) g.set(m.graduationYear, []); g.get(m.graduationYear).push(m); });
+  return [...g];
+}
+
+// A: Year bands
+function memberA(m, showYear) {
+  return `<li class="m" id="m-${m.slug}">
+    <a class="m-name" href="${esc(m.site)}">${esc(m.name)}</a>
+    <span class="m-site mono">${esc(host(m.site))}${showYear ? `<span class="muted"> / ${m.graduationYear}</span>` : ""}</span>
+    ${m.tagline ? `<p class="m-tag">${esc(m.tagline)}</p>` : `<p class="m-tag"></p>`}
+    <a class="m-gh mono" href="https://github.com/${esc(m.github)}">@${esc(m.github)}</a>
+  </li>`;
+}
+function renderA(list) {
+  if (state.mode === "az") return `<section class="band" style="grid-template-columns:1fr"><ul class="band-grid">${list.map(m => memberA(m, true)).join("")}</ul></section>`;
+  return groups(list).map(([y, ms]) => `<section class="band" aria-labelledby="y${y}">
+    <div class="band-year"><span class="num" id="y${y}">${y}</span><span class="state mono muted">${yearState(y)}</span></div>
+    <ul class="band-grid">${ms.map(m => memberA(m, false)).join("")}</ul></section>`).join("");
+}
+
+// B: Roster
+function renderB(list) {
+  let last = null;
+  return `<ol class="roster">${list.map(m => {
+    const brk = state.mode === "year" && last !== null && last !== m.graduationYear;
+    last = m.graduationYear;
+    return `<li class="row${brk ? " break" : ""}" id="m-${m.slug}">
+      <span class="jersey" title="Graduation Year ${m.graduationYear}" aria-label="Graduation Year ${m.graduationYear}">${two(m.graduationYear)}</span>
+      <span><a class="n" href="${esc(m.site)}">${esc(m.name)}</a>${m.tagline ? `<span class="t">${esc(m.tagline)}</span>` : ""}</span>
+      <span class="s mono">${esc(host(m.site))}</span>
+      <a class="g mono" href="https://github.com/${esc(m.github)}">@${esc(m.github)}</a>
+    </li>`;
+  }).join("")}</ol>`;
+}
+
+// C: Poster
+function nameC(m, withYear) {
+  return `<a href="${esc(m.site)}" id="m-${m.slug}" data-slug="${m.slug}">${esc(m.name)}${withYear ? `<sup>${two(m.graduationYear)}</sup>` : ""}<span class="d">${esc(host(m.site))}${m.tagline ? `<br>${esc(m.tagline)}` : ""}</span></a>`;
+}
+const SEP = `<span class="sep" aria-hidden="true"> / </span>`;
+function renderC(list) {
+  const body = state.mode === "az"
+    ? `<p class="poster">${list.map(m => nameC(m, true)).join(SEP)}</p>`
+    : groups(list).map(([y, ms]) => `<section class="pyear"><span class="patch">${y}</span><span class="mono muted">${yearState(y)}</span>
+        <p class="poster">${ms.map(m => nameC(m, false)).join(SEP)}</p></section>`).join("");
+  return `<div class="poster-wrap"><div>${body}</div>
+    <aside class="panel" id="panel" aria-live="polite"><p class="mono muted">Point at or tab to a name to see their Site.</p></aside></div>`;
+}
+function panelFor(m) {
+  return `<span class="mono muted">${m.graduationYear}, ${yearState(m.graduationYear)}</span>
+    <h2>${esc(m.name)}</h2>
+    <a class="mono" href="${esc(m.site)}">${esc(host(m.site))}</a>
+    ${m.tagline ? `<p>${esc(m.tagline)}</p>` : ""}
+    <a class="mono muted" href="https://github.com/${esc(m.github)}">@${esc(m.github)}</a>`;
+}
+
+function render() {
+  const list = filtered();
+  document.getElementById("count").textContent = `${MEMBERS.length} Members across ${new Set(MEMBERS.map(m => m.graduationYear)).size} Graduation Years`;
+  const out = document.getElementById("out");
+  if (!list.length) {
+    out.innerHTML = `<div class="empty"><p>No Members match "${esc(state.q)}".</p><button type="button" id="clear">Clear search</button></div>`;
+    document.getElementById("clear").onclick = () => { q.value = ""; state.q = ""; render(); q.focus(); };
+  } else {
+    out.innerHTML = { A: renderA, B: renderB, C: renderC }[state.variant](list);
+  }
+  if (state.variant === "C") {
+    const panel = document.getElementById("panel");
+    out.querySelectorAll("[data-slug]").forEach(a => {
+      const show = () => { out.querySelectorAll(".poster a.on").forEach(x => x.classList.remove("on")); a.classList.add("on"); panel.innerHTML = panelFor(MEMBERS.find(m => m.slug === a.dataset.slug)); };
+      a.addEventListener("mouseenter", show); a.addEventListener("focus", show);
+    });
+  }
+  document.querySelectorAll(".seg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.mode === state.mode));
+  document.getElementById("vlabel").textContent = `${state.variant} (${VARIANTS[state.variant]})`;
+}
+
+const q = document.getElementById("q");
+q.addEventListener("input", () => { state.q = q.value; render(); });
+document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => { state.mode = b.dataset.mode; render(); }));
+
+// Random: in production this goes to the ring's /random/ page and navigates. Here the Sites are fake, so we point at one instead.
+document.getElementById("random").addEventListener("click", () => {
+  const m = MEMBERS[Math.floor(Math.random() * MEMBERS.length)];
+  state.q = ""; q.value = ""; render();
+  const el = document.getElementById(`m-${m.slug}`);
+  if (el) {
+    el.classList.add("flash");
+    el.scrollIntoView({ block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    setTimeout(() => el.classList.remove("flash"), 1600);
+  }
+  document.querySelector(".toast")?.remove();
+  const t = document.createElement("div");
+  t.className = "toast mono"; t.setAttribute("role", "status");
+  t.innerHTML = `<span>Random Site: ${esc(host(m.site))} (prototype: not navigating)</span><a href="${esc(m.site)}">Visit</a>`;
+  document.body.append(t); setTimeout(() => t.remove(), 3500);
+});
+
+function go(step) {
+  const i = (KEYS.indexOf(state.variant) + step + KEYS.length) % KEYS.length;
+  state.variant = KEYS[i];
+  const u = new URL(location.href); u.searchParams.set("variant", state.variant); history.replaceState(null, "", u);
+  render();
+}
+document.getElementById("prev").onclick = () => go(-1);
+document.getElementById("next").onclick = () => go(1);
+addEventListener("keydown", e => {
+  if (e.target.closest("input, textarea, [contenteditable]")) return;
+  if (e.key === "ArrowLeft") go(-1);
+  if (e.key === "ArrowRight") go(1);
+});
+render();
+</script>
+</body>
+</html>
