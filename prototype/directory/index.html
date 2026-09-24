@@ -7,6 +7,10 @@
     A  Year bands   big Graduation Year numeral beside a Member grid (the decided layout)
     B  Roster       one row per Member, two-digit jersey numeral on every row
     C  Poster       names set large and flowing; details on hover/focus in a side panel
+    D  Roster, full year on every row           (round 2: B layout + A's full-year numerals)
+    E  Roster, full year once per year band     (round 2: the other reading of the same ask)
+  D and E show the optional per-Member note (Graduated / Transferred / Attended) instead of
+  the year-derived "graduated or left" / "expected" notes.
   All Members below are FAKE. Random does not navigate (the Sites don't exist).
   Rendering is client-side here for speed; production renders the list at build
   time so the Directory works without JS.
@@ -105,6 +109,22 @@ footer { border-top: 1px solid var(--line); margin-top: 5rem; padding: 2rem 0 7r
 .row .g:hover { text-decoration: underline; }
 @media (max-width: 899px) { .row .s, .row .g { grid-column: 2; } }
 
+/* D and E: roster with full years */
+.rowd { grid-template-columns: 5.5rem 1fr; }
+.rowd.noyear { grid-template-columns: 1fr; }
+@media (min-width: 900px) {
+  .rowd { grid-template-columns: 9rem minmax(0, 1.4fr) minmax(0, 1fr) 11rem; }
+  .rowd.noyear { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) 11rem; }
+}
+.yr { grid-row: span 3; }
+@media (min-width: 900px) { .yr { grid-row: auto; } }
+.fy { display: block; font-weight: 900; font-size: clamp(1.75rem, 3.2vw, 2.75rem); line-height: .9; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.yr .st { display: block; margin-top: .35rem; }
+.rowd.noyear .n + .st { margin-left: .5rem; }
+@media (max-width: 899px) { .rowd.noyear .s, .rowd.noyear .g { grid-column: 1; } }
+.band .roster { border-top: 1px solid var(--line); }
+.band:has(.roster) { padding-top: 1.5rem; }
+
 /* C: poster */
 .poster-wrap { display: grid; grid-template-columns: 1fr; gap: 3rem; padding-top: 2.5rem; }
 @media (min-width: 900px) { .poster-wrap { grid-template-columns: 1fr 20rem; } }
@@ -171,21 +191,21 @@ footer { border-top: 1px solid var(--line); margin-top: 5rem; padding: 2rem 0 7r
 <script>
 // FAKE Members. Shape follows the Member schema decision: name, site, graduationYear, github, optional tagline.
 const MEMBERS = [
-  { slug: "aaliyah-brooks", name: "Aaliyah Brooks", site: "https://aaliyahbrooks.dev/", graduationYear: 2023, github: "aaliyahb", tagline: "Backend developer at a Houston logistics startup." },
-  { slug: "minh-anh-nguyen", name: "Minh Anh Nguyen", site: "https://minhanh.github.io/", graduationYear: 2025, github: "minhanh-ng", tagline: "Transferred to UH. Building a bus-arrival app for METRO riders." },
+  { slug: "aaliyah-brooks", status: "graduated", name: "Aaliyah Brooks", site: "https://aaliyahbrooks.dev/", graduationYear: 2023, github: "aaliyahb", tagline: "Backend developer at a Houston logistics startup." },
+  { slug: "minh-anh-nguyen", status: "transferred", name: "Minh Anh Nguyen", site: "https://minhanh.github.io/", graduationYear: 2025, github: "minhanh-ng", tagline: "Transferred to UH. Building a bus-arrival app for METRO riders." },
   { slug: "daniela-ortiz", name: "Daniela Ortiz", site: "https://danielaortiz.me/", graduationYear: 2027, github: "dortiz-codes", tagline: "First-year CS student. Learning Rust." },
-  { slug: "obinna-eze", name: "Obinna Eze", site: "https://obinnaeze.com/", graduationYear: 2019, github: "obinnaeze", tagline: "Site reliability engineer. Used to tutor in the CS lab." },
-  { slug: "priya-raman", name: "Priya Raman", site: "https://praman.github.io/portfolio/", graduationYear: 2025, github: "praman" },
-  { slug: "marcus-thibodeaux", name: "Marcus Thibodeaux", site: "https://marcust.dev/", graduationYear: 2019, github: "mthibodeaux", tagline: "Game developer. Mostly Godot." },
+  { slug: "obinna-eze", status: "graduated", name: "Obinna Eze", site: "https://obinnaeze.com/", graduationYear: 2019, github: "obinnaeze", tagline: "Site reliability engineer. Used to tutor in the CS lab." },
+  { slug: "priya-raman", status: "graduated", name: "Priya Raman", site: "https://praman.github.io/portfolio/", graduationYear: 2025, github: "praman" },
+  { slug: "marcus-thibodeaux", status: "attended", name: "Marcus Thibodeaux", site: "https://marcust.dev/", graduationYear: 2019, github: "mthibodeaux", tagline: "Game developer. Mostly Godot." },
   { slug: "sofia-castaneda", name: "Sofía Castañeda", site: "https://sofiacastaneda.dev/", graduationYear: 2027, github: "sofcast", tagline: "Into web accessibility and screen readers." },
-  { slug: "kevin-tran", name: "Kevin Tran", site: "https://kevintran.github.io/", graduationYear: 2023, github: "kvtran", tagline: "Data analyst. Plots things in R." },
+  { slug: "kevin-tran", status: "transferred", name: "Kevin Tran", site: "https://kevintran.github.io/", graduationYear: 2023, github: "kvtran", tagline: "Data analyst. Plots things in R." },
   { slug: "hamza-siddiqui", name: "Hamza Siddiqui", site: "https://hamza.codes/", graduationYear: 2025, github: "hsiddiqui", tagline: "Security student. CTF writeups on the blog." },
   { slug: "lupe-garza", name: "Lupe Garza", site: "https://lupegarza.net/", graduationYear: 2023, github: "lupegarza" },
   { slug: "rafael-mendoza", name: "Rafael Mendoza", site: "https://rafaelmendoza.github.io/site/", graduationYear: 2027, github: "rafa-mendoza", tagline: "Evening student with a day job in IT support. Building a homelab on old laptops." },
-  { slug: "jada-okafor", name: "Jada Okafor", site: "https://jadaokafor.dev/", graduationYear: 2025, github: "jadaokafor", tagline: "Frontend developer. Likes CSS more than most people do." },
+  { slug: "jada-okafor", status: "graduated", name: "Jada Okafor", site: "https://jadaokafor.dev/", graduationYear: 2025, github: "jadaokafor", tagline: "Frontend developer. Likes CSS more than most people do." },
 ];
 const NOW = 2026;
-const VARIANTS = { A: "Year bands", B: "Roster", C: "Poster" };
+const VARIANTS = { A: "Year bands", B: "Roster", C: "Poster", D: "Roster, year per row", E: "Roster, year per band" };
 const KEYS = Object.keys(VARIANTS);
 
 const state = { q: "", mode: "year", variant: new URLSearchParams(location.search).get("variant") || "A" };
@@ -195,6 +215,7 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;"
 const host = url => url.replace(/^https:\/\//, "").replace(/\/$/, "");
 const two = y => String(y).slice(-2);
 const yearState = y => y > NOW ? "expected" : y === NOW ? "this year" : "graduated or left";
+const STATUS = { graduated: "Graduated", transferred: "Transferred", attended: "Attended" };
 const byName = (a, b) => a.name.localeCompare(b.name);
 
 function filtered() {
@@ -260,6 +281,31 @@ function panelFor(m) {
     <a class="mono muted" href="https://github.com/${esc(m.github)}">@${esc(m.github)}</a>`;
 }
 
+// D and E: roster rows with full-year numerals and the optional per-Member note
+function rowD(m, withYear, brk) {
+  const note = m.status ? `<span class="st mono muted">${STATUS[m.status]}</span>` : "";
+  return `<li class="row rowd${withYear ? "" : " noyear"}${brk ? " break" : ""}" id="m-${m.slug}">
+    ${withYear ? `<span class="yr"><span class="fy">${m.graduationYear}</span>${note}</span>` : ""}
+    <span><a class="n" href="${esc(m.site)}">${esc(m.name)}</a>${!withYear && note ? " " + note : ""}${m.tagline ? `<span class="t">${esc(m.tagline)}</span>` : ""}</span>
+    <span class="s mono">${esc(host(m.site))}</span>
+    <a class="g mono" href="https://github.com/${esc(m.github)}">@${esc(m.github)}</a>
+  </li>`;
+}
+function renderD(list) {
+  let last = null;
+  return `<ol class="roster">${list.map(m => {
+    const brk = state.mode === "year" && last !== null && last !== m.graduationYear;
+    last = m.graduationYear;
+    return rowD(m, true, brk);
+  }).join("")}</ol>`;
+}
+function renderE(list) {
+  if (state.mode === "az") return renderD(list);
+  return groups(list).map(([y, ms]) => `<section class="band" aria-labelledby="y${y}">
+    <div class="band-year"><span class="num" id="y${y}">${y}</span></div>
+    <ol class="roster">${ms.map(m => rowD(m, false, false)).join("")}</ol></section>`).join("");
+}
+
 function render() {
   const list = filtered();
   document.getElementById("count").textContent = `${MEMBERS.length} Members across ${new Set(MEMBERS.map(m => m.graduationYear)).size} Graduation Years`;
@@ -268,7 +314,7 @@ function render() {
     out.innerHTML = `<div class="empty"><p>No Members match "${esc(state.q)}".</p><button type="button" id="clear">Clear search</button></div>`;
     document.getElementById("clear").onclick = () => { q.value = ""; state.q = ""; render(); q.focus(); };
   } else {
-    out.innerHTML = { A: renderA, B: renderB, C: renderC }[state.variant](list);
+    out.innerHTML = { A: renderA, B: renderB, C: renderC, D: renderD, E: renderE }[state.variant](list);
   }
   if (state.variant === "C") {
     const panel = document.getElementById("panel");
