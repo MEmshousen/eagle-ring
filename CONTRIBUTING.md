@@ -154,21 +154,21 @@ These rules are checked by code. If this page and the code ever disagree, the co
 - Subfolders are fine: `https://7jpierre.github.io/jp-website/`.
 - It must be on a public domain name, with a dot in it. `https://localhost/` is not allowed.
 - No username or password in the address (like `https://me:secret@example.com/`).
-- No other Member can already have the same Site.
-- It can't be a profile page on another service, such as `linkedin.com`, `x.com`, or a GitHub profile like `github.com/yourname`. A GitHub Pages site like `yourname.github.io` is fine. The Maintainer decides unclear cases.
+- No other Member can already have the same Site. Capital letters in the domain and a trailing `/` don't make it different.
+- It can't be a page on a profile or social service. That means anything on `github.com`, social sites like LinkedIn, X, Instagram or YouTube, code hosts like GitLab or Codeberg, coding-profile sites like LeetCode or Kaggle, and link-in-bio pages like Linktree. A GitHub Pages site like `yourname.github.io` is fine. The full list is in [`scripts/submission/profile-hosts.ts`](scripts/submission/profile-hosts.ts).
 
 ### `graduationYear` (required)
 
 - The year you graduated, expect to graduate, or left the School (for example, the year you transferred out).
 - Still a student? Put your best guess. You can change it later.
-- A whole number from 1990 to six years after the current year. In 2026 that's 1990 to 2032.
+- A whole number from 1990 to six years after the current year.
 - Write it as a plain number, without quotes: `graduationYear: 2023`, not `graduationYear: "2023"`.
 
 ### `github` (required)
 
 - Your GitHub username (handle), **without** the `@`: `github: kvtran`, not `github: "@kvtran"`.
 - It follows GitHub's own rules: 1 to 39 letters, digits or single hyphens, not starting or ending with a hyphen.
-- No other Member can already have the same handle.
+- No other Member can already have the same handle, ignoring capital letters.
 - It's shown in the Directory. It also decides who owns the record: changes to it are expected to come from this account (see [section 7](#7-editing-your-record-or-leaving)).
 - If your handle is only digits (like `12345`), wrap it in double quotes: `github: "12345"`. Otherwise YAML reads it as a number and the check fails.
 
@@ -200,22 +200,31 @@ Only the six fields above are allowed. Any other field (a typo like `Name:` or `
 
 ## 5. What CI checks
 
-<!-- sync with scripts/ once Submission CI merges -->
-
-When you open or update your PR, CI runs these checks. You'll see them near the bottom of the PR page: a green tick passed, a red cross failed.
+When you open or update your PR, CI runs a check called **Submission checks**. You'll see it near the bottom of the PR page: a green tick passed, a red cross failed. Click **Details** next to it to see its summary, which says exactly what to fix.
 
 **Blocking checks.** If any of these fail, the PR can't be merged until you fix it:
 
-- Your file passes every rule in [section 4](#4-every-field-and-its-rules), including the filename (slug) format and no `status` on a future Graduation Year.
-- Your `site` and `github` aren't already used by another Member.
-- Your `site` isn't a profile page on the denylist (LinkedIn, X, a GitHub profile page and similar).
-- Your PR changes **exactly one file** in `src/content/members/` **and nothing else**. (The Maintainer's own PRs are exempt.)
+- **One file only.** Your PR changes **exactly one file** in `src/content/members/` **and nothing else**. The Maintainer's own PRs are exempt.
+  - **Never rename your file.** A rename counts as deleting one Member file and adding another, which is two files. Your slug stays the same forever once it's merged.
+- **Valid file.** The filename is a valid slug, the file is valid YAML, and every field follows [section 4](#4-every-field-and-its-rules).
+- **Not a profile page.** Your `site` isn't on the list of profile and social services (see [`site`](#site-required)).
+- **Not already taken.** Your `site` and `github` aren't already used by another Member.
+- **The Directory still builds** with your file in it.
 
 **Warning only: Site reachability.** CI tries to open your Site once. If it can't, you'll see a warning, not a failure. Some Sites block robots or are slow to wake up, so this can happen even when your Site works fine. The Maintainer checks it by hand and decides.
 
-**"Needs Maintainer approval".** If your PR edits a record that already exists, and your GitHub account isn't the one in that record's `github` field, CI flags the PR as needing Maintainer approval. This covers someone editing another person's record, and a Member who renamed their GitHub account. It isn't an error. It means the Maintainer will check with the owner before merging.
+**"Needs Maintainer approval".** If your PR edits or deletes a record that already exists, and your GitHub account isn't the one in that record's `github` field, the check's summary says the PR needs Maintainer approval. This covers someone editing another person's record, and a Member who renamed their GitHub account. It never fails the check. It means the Maintainer will check with the owner before merging. If you renamed your GitHub account, say so in your PR description.
 
 The first time you open a PR, GitHub may wait for the Maintainer to approve running CI at all. That's a normal GitHub safety step for new contributors.
+
+**Running the check yourself (optional, for git users).** You need Node.js 22.18 or newer. From your clone, commit your file first (the check reads commits, not unsaved changes), then run:
+
+```sh
+npm ci
+npm run check:submission -- --author <your-github-handle>
+```
+
+It compares your commit with `origin/main`. If your fork is behind, sync it first. Add `--no-fetch` to skip opening your Site.
 
 ## 6. Adding the Ring Widget
 
