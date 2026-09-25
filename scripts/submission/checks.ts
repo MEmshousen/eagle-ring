@@ -133,6 +133,14 @@ function memberEntry(path: string): string | undefined {
   return path.startsWith(prefix) ? path.slice(prefix.length) : undefined
 }
 
+/** Folders that hold CI and the checks themselves. A Submission never touches them. */
+export const CI_DIRS = ['scripts', '.github'] as const
+
+/** Whether a path is part of CI or the checks (under {@link CI_DIRS}). */
+export function isCiPath(path: string): boolean {
+  return CI_DIRS.some((dir) => path.startsWith(`${dir}/`))
+}
+
 function listFiles(paths: readonly string[]): string {
   return paths.map((p) => `\`${p}\``).join(', ')
 }
@@ -181,10 +189,20 @@ function checkScope(memberChanges: ChangedFile[], otherChanges: ChangedFile[]): 
         'If you renamed your file, rename it back: the slug (the filename) never changes after it is merged.',
     })
   }
-  if (otherChanges.length > 0) {
+  const ciChanges = otherChanges.filter((c) => isCiPath(c.path))
+  const restChanges = otherChanges.filter((c) => !isCiPath(c.path))
+  if (ciChanges.length > 0) {
     findings.push({
       message:
-        `This PR also changes files outside \`${MEMBERS_DIR}/\`: ${listFiles(otherChanges.map((c) => c.path))}. ` +
+        `This PR changes the checks themselves (${listFiles(ciChanges.map((c) => c.path))}). ` +
+        "Submissions can't change CI; the Maintainer reviews those by hand. " +
+        'Undo those changes, or open a separate PR for them.',
+    })
+  }
+  if (restChanges.length > 0) {
+    findings.push({
+      message:
+        `This PR also changes files outside \`${MEMBERS_DIR}/\`: ${listFiles(restChanges.map((c) => c.path))}. ` +
         'A Submission changes only your Member file. Undo those changes, or open a separate PR for them.',
     })
   }

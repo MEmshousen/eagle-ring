@@ -10,6 +10,12 @@
  *   --author <login> The PR author's GitHub handle. Default: $PR_AUTHOR.
  *   --no-fetch       Skip fetching the Site.
  *
+ * It reads git in the working directory, from commits only. CI runs the base
+ * branch's copy of this script with the PR's checkout as the working
+ * directory, so a PR can't edit the checks it is judged by:
+ *
+ *   cd pr && node ../base/scripts/check-submission.ts --base HEAD^1 --head HEAD
+ *
  * Exits 1 when a blocking check fails. Warnings and "needs Maintainer
  * approval" never fail it. In GitHub Actions it also writes the job summary,
  * annotations, and the `needs-maintainer-approval` step output.

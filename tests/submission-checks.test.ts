@@ -218,6 +218,33 @@ describe('exactly one Member file and nothing else', () => {
     )
   })
 
+  it('rejects a Submission that changes scripts/ or .github/, with its own message', async () => {
+    const sam = newMember('sam-lee')
+    const report = await run({
+      changes: [
+        added(sam.path),
+        modified('scripts/submission/checks.ts'),
+        modified('.github/workflows/submission-checks.yml'),
+        modified('README.md'),
+      ],
+      files: [sam],
+    })
+    expect(report.errors.map((e) => e.message)).toEqual([
+      'This PR changes the checks themselves (`scripts/submission/checks.ts`, ' +
+        "`.github/workflows/submission-checks.yml`). Submissions can't change CI; the Maintainer reviews those " +
+        'by hand. Undo those changes, or open a separate PR for them.',
+      'This PR also changes files outside `src/content/members/`: `README.md`. ' +
+        'A Submission changes only your Member file. Undo those changes, or open a separate PR for them.',
+    ])
+  })
+
+  it('does not mistake a lookalike path for CI', async () => {
+    const sam = newMember('sam-lee')
+    const report = await run({ changes: [added(sam.path), added('scripts.md'), added('docs/.github/x')], files: [sam] })
+    expect(report.errors).toHaveLength(1)
+    expect(report.errors[0].message).toMatch(/^This PR also changes files outside/)
+  })
+
   it('rejects a PR from someone else with no Member file', async () => {
     const report = await run({ changes: [modified('CONTRIBUTING.md')] })
     expect(report.errors.map((e) => e.message)).toEqual([
