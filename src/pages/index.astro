@@ -1,0 +1,37 @@
+---
+// Placeholder index. The real Directory replaces this page in its own ticket.
+import Base from '../layouts/Base.astro'
+import { url } from '../lib/url'
+
+const repoUrl = 'https://github.com/jpierre-7/eagle-ring'
+---
+
+<Base>
+  <div class="mx-auto flex min-h-[100dvh] max-w-6xl flex-col px-4 sm:px-8">
+    <header class="flex h-16 items-center border-b border-line">
+      <a href={url()} class="font-display text-xl font-extrabold tracking-tight">Eagle Ring</a>
+    </header>
+
+    <main class="flex flex-1 flex-col justify-center gap-8 py-16 md:py-24">
+      <h1 class="font-display text-6xl leading-[1.1] font-extrabold tracking-tighter sm:text-8xl md:text-9xl">
+        <span class="inline-block border-b-[0.12em] border-accent pb-[0.04em]">Eagle Ring</span>
+      </h1>
+      <p class="max-w-[30ch] text-2xl leading-snug font-medium text-ink sm:text-3xl">
+        Personal sites from Houston City College CS students, past and present.
+      </p>
+      <p class="font-mono text-sm text-ink-muted">
+        The Directory is being built.
+      </p>
+    </main>
+
+    <footer class="flex flex-col gap-2 border-t border-line py-6 text-sm text-ink-muted sm:flex-row sm:items-center sm:justify-between">
+      <p>Eagle Ring is unofficial and student-run. Not affiliated with Houston City College.</p>
+      <a
+        href={repoUrl}
+        class="font-mono text-ink underline decoration-accent decoration-2 underline-offset-4 motion-safe:transition-colors hover:text-accent-ink"
+      >
+        Source on GitHub
+      </a>
+    </footer>
+  </div>
+</Base>

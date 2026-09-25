@@ -1,0 +1,32 @@
+---
+import '../styles/global.css'
+import { absoluteUrl } from '../lib/url'
+
+interface Props {
+  title?: string
+  description?: string
+  /** Path under the base, for the canonical link. */
+  path?: string
+}
+
+const {
+  title = 'Eagle Ring',
+  description = 'A webring of personal Sites from Houston City College CS students and alumni.',
+  path = '',
+} = Astro.props
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="canonical" href={absoluteUrl(path)} />
+    <title>{title}</title>
+  </head>
+  <body class="min-h-[100dvh] bg-surface text-ink">
+    <slot />
+  </body>
+</html>
