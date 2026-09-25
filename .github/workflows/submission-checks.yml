@@ -8,6 +8,23 @@
 # needs more. "Needs Maintainer approval" is reported in the job summary and
 # as an annotation rather than as a label, because labelling a fork PR needs
 # a write token (see the PR that added this file).
+#
+# Two checkouts, so a PR can't switch its own checks off (issue #31):
+#   base/  the PR's base branch (main). Its copy of scripts/ is the code
+#          that runs the checks, with its own dependencies.
+#   pr/    the PR merged into the base. Only its git history is read, as
+#          data: what the PR changes and its Member files. CODEOWNERS comes
+#          from the base commit.
+# The check step runs before any of the PR's code does (its `npm ci` and
+# build come after), so nothing from the PR can touch base/ before the
+# checks have run and their result is recorded. The script runs with its
+# working directory in pr/ and reads git from there; no PR file is executed.
+#
+# What this doesn't cover: on `pull_request`, GitHub runs the workflow file
+# from the PR itself, so a PR that edits this file can change what runs.
+# That edit shows in the diff, the base copy of the checks fails any
+# non-Maintainer PR that touches .github/ or scripts/ whenever it does run,
+# and the Maintainer reviews every PR before it merges.
 name: Submission checks
 
 on:
@@ -26,10 +43,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      # The default ref is the PR merged into the current base branch, so
-      # HEAD^1 is the base and HEAD^1..HEAD is exactly the PR's change.
-      - uses: actions/checkout@v7
+      # The code that runs the checks: the base branch as it is now.
+      - name: Check out the base branch (runs the checks)
+        uses: actions/checkout@v7
         with:
+          ref: ${{ github.base_ref }}
+          path: base
+          persist-credentials: false
+
+      # The data. The default ref is the PR merged into the current base
+      # branch, so HEAD^1 is the base and HEAD^1..HEAD is exactly the PR's
+      # change.
+      - name: Check out the PR (the data)
+        uses: actions/checkout@v7
+        with:
+          path: pr
           fetch-depth: 2
           persist-credentials: false
 
@@ -37,16 +65,31 @@ jobs:
         with:
           node-version: 24
           cache: npm
+          cache-dependency-path: |
+            base/package-lock.json
+            pr/package-lock.json
 
-      - run: npm ci
+      - name: Install the base branch's dependencies
+        working-directory: base
+        run: npm ci
 
       - name: Check the Submission
+        working-directory: pr
         env:
           PR_AUTHOR: ${{ github.event.pull_request.user.login }}
-        run: node scripts/check-submission.ts --base HEAD^1 --head HEAD
+        run: node ../base/scripts/check-submission.ts --base HEAD^1 --head HEAD
 
-      # The full schema, as the deploy build sees it. Runs even when the step
-      # above fails, so the submitter sees every problem in one go.
-      - name: Build the site
+      # From here on the PR's own code runs. Both steps run even when the
+      # check above fails, so the submitter sees every problem in one go.
+      - name: Install the PR's dependencies
+        id: pr-install
         if: ${{ !cancelled() }}
+        working-directory: pr
+        run: npm ci
+
+      # The full schema, as the deploy build sees it. Read-only: it only
+      # builds the PR's tree.
+      - name: Build the site
+        if: ${{ !cancelled() && steps.pr-install.outcome == 'success' }}
+        working-directory: pr
         run: npm run build
