@@ -8,7 +8,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "test": "vitest run"
+    "test": "vitest run",
+    "check:submission": "node scripts/check-submission.ts"
   },
   "dependencies": {
     "@phosphor-icons/web": "^2.1.2",

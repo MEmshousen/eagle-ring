@@ -1,0 +1,52 @@
+# Checks on every PR, including Submissions from forks (spec §4).
+#
+# The logic lives in scripts/check-submission.ts, which you can run locally:
+#   npm run check:submission -- --author <your-github-handle>
+#
+# Security: this runs on `pull_request` only, never `pull_request_target`.
+# Fork PRs get a read-only token and no secrets, and none of these checks
+# needs more. "Needs Maintainer approval" is reported in the job summary and
+# as an annotation rather than as a label, because labelling a fork PR needs
+# a write token (see the PR that added this file).
+name: Submission checks
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: submission-checks-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Submission checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # The default ref is the PR merged into the current base branch, so
+      # HEAD^1 is the base and HEAD^1..HEAD is exactly the PR's change.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Check the Submission
+        env:
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: node scripts/check-submission.ts --base HEAD^1 --head HEAD
+
+      # The full schema, as the deploy build sees it. Runs even when the step
+      # above fails, so the submitter sees every problem in one go.
+      - name: Build the site
+        if: ${{ !cancelled() }}
+        run: npm run build

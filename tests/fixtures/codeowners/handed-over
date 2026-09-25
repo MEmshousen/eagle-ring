@@ -1,0 +1,5 @@
+# Handed over to a club: two Maintainers, plus a team and an email owner,
+# which are not people and are ignored.
+*                 @eagle-club-lead @jpierre-7   # inline comment
+/docs/            @hcc-cs/webring-team
+/CONTRIBUTING.md  someone@example.com
