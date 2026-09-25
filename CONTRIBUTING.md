@@ -211,6 +211,8 @@ When you open or update your PR, CI runs a check called **Submission checks**. Y
 - **Not already taken.** Your `site` and `github` aren't already used by another Member.
 - **The Directory still builds** with your file in it.
 
+**The checks run from `main`, not from your PR.** Editing anything under `scripts/` or `.github/` won't change the result: a Submission that touches those folders fails with "This PR changes the checks themselves". If you think a check is wrong, [open an issue](https://github.com/jpierre-7/eagle-ring/issues/new) instead.
+
 **Warning only: Site reachability.** CI tries to open your Site once. If it can't, you'll see a warning, not a failure. Some Sites block robots or are slow to wake up, so this can happen even when your Site works fine. The Maintainer checks it by hand and decides.
 
 **"Needs Maintainer approval".** If your PR edits or deletes a record that already exists, and your GitHub account isn't the one in that record's `github` field, the check's summary says the PR needs Maintainer approval. This covers someone editing another person's record, and a Member who renamed their GitHub account. It never fails the check. It means the Maintainer will check with the owner before merging. If you renamed your GitHub account, say so in your PR description.
