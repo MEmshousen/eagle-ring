@@ -1,0 +1,33 @@
+---
+/**
+ * A Phosphor icon (bold weight), inlined as SVG at build time.
+ *
+ * The glyph comes straight from the installed `@phosphor-icons/web` package
+ * (MIT), so no icon font ships to the browser and no path is drawn by hand.
+ * The icon is decorative: pair it with visible text.
+ */
+import selection from '@phosphor-icons/web/bold/selection.json'
+
+interface Props {
+  /** The Phosphor name without the weight suffix, e.g. `shuffle`. */
+  name: string
+  class?: string
+}
+
+const { name, class: className } = Astro.props
+const glyph = selection.icons.find((icon) => icon.properties.name === `${name}-bold`)
+if (!glyph) throw new Error(`Unknown Phosphor icon "${name}"`)
+const size = selection.height
+---
+
+<svg
+  class={className}
+  viewBox={`0 0 ${size} ${size}`}
+  width="1em"
+  height="1em"
+  fill="currentColor"
+  aria-hidden="true"
+  focusable="false"
+>
+  {glyph.icon.paths.map((d) => <path d={d} />)}
+</svg>

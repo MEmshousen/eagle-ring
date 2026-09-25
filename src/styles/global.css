@@ -124,9 +124,15 @@
     color: var(--er-on-accent);
   }
 
-  /* The visible yellow focus ring (spec §5, accessibility). */
+  /*
+   * The visible yellow focus ring (spec §5, accessibility). Yellow alone is
+   * about 1.5:1 against the light surface, below the 3:1 WCAG 1.4.11 asks of
+   * a focus indicator, so an ink ring fills the offset gap: yellow on ink on
+   * surface is clearly visible in both modes.
+   */
   :focus-visible {
     outline: 3px solid var(--er-accent);
     outline-offset: 3px;
+    box-shadow: 0 0 0 3px var(--er-ink);
   }
 }
