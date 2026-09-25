@@ -1,37 +1,471 @@
 ---
-// Placeholder index. The real Directory replaces this page in its own ticket.
+/**
+ * The Directory (spec §5): every Member, in year bands, rendered at build time.
+ *
+ * Without JavaScript this is the plain By-year roster. Search, the By year /
+ * A-Z toggle and Random Site need the script at the bottom, so they render
+ * `hidden` and the script reveals them. They only exist at all with two or
+ * more Members (the small-ring table in spec §5).
+ */
 import Base from '../layouts/Base.astro'
+import Icon from '../components/Icon.astro'
 import { url } from '../lib/url'
+import {
+  members,
+  groupByGraduationYear,
+  sortByName,
+  siteDomain,
+  standingLabel,
+  type Member,
+} from '../lib/members'
 
-const repoUrl = 'https://github.com/jpierre-7/eagle-ring'
+const REPO_URL = 'https://github.com/jpierre-7/eagle-ring'
+const JOIN_URL = `${REPO_URL}/blob/main/CONTRIBUTING.md`
+
+const bands = groupByGraduationYear(members)
+const alphabetical = sortByName(members)
+const hasMembers = members.length > 0
+const hasControls = members.length > 1
+
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
+const countLine = `${plural(members.length, 'Member')} across ${plural(bands.length, 'Graduation Year')}`
+
+/**
+ * What search matches for a Member: name, Site, GitHub handle, tagline and
+ * year (spec §5). Lowercased with accents stripped; the script normalises the
+ * query the same way, so "sofia" finds "Sofía".
+ */
+function searchText(member: Member): string {
+  return [member.name, siteDomain(member.site), `@${member.github}`, member.tagline ?? '', member.graduationYear]
+    .join(' ')
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .toLowerCase()
+}
+
+const rows = (list: Member[]) =>
+  list.map((member) => ({
+    member,
+    domain: siteDomain(member.site),
+    standing: member.status ? standingLabel(member.status) : undefined,
+    search: searchText(member),
+  }))
 ---
 
 <Base>
-  <div class="mx-auto flex min-h-[100dvh] max-w-6xl flex-col px-4 sm:px-8">
-    <header class="flex h-16 items-center border-b border-line">
+  <div class="mx-auto flex min-h-[100dvh] max-w-7xl flex-col px-4 sm:px-8 lg:px-10">
+    <header class="flex h-16 items-center justify-between gap-4 border-b border-line">
       <a href={url()} class="font-display text-xl font-extrabold tracking-tight">Eagle Ring</a>
+      <a href={JOIN_URL} class="join font-bold">Join the ring</a>
     </header>
 
-    <main class="flex flex-1 flex-col justify-center gap-8 py-16 md:py-24">
-      <h1 class="font-display text-6xl leading-[1.1] font-extrabold tracking-tighter sm:text-8xl md:text-9xl">
-        <span class="inline-block border-b-[0.12em] border-accent pb-[0.04em]">Eagle Ring</span>
-      </h1>
-      <p class="max-w-[30ch] text-2xl leading-snug font-medium text-ink sm:text-3xl">
-        Personal sites from Houston City College CS students, past and present.
-      </p>
-      <p class="font-mono text-sm text-ink-muted">
-        The Directory is being built.
-      </p>
+    <main class="flex-1">
+      <section class="pt-12 pb-8 md:pt-16 md:pb-10">
+        <h1 class="max-w-[20ch] font-display text-4xl leading-[1.05] font-extrabold tracking-tight text-balance sm:text-5xl md:text-6xl">
+          Personal sites from Houston City College CS students, past and present.
+        </h1>
+        {hasMembers && <p class="mt-4 font-mono text-sm text-ink-muted">{countLine}</p>}
+      </section>
+
+      {
+        !hasMembers && (
+          <section class="border-t-2 border-ink py-12 md:py-16">
+            <p class="text-2xl font-bold sm:text-3xl">No Members yet.</p>
+            <a href={JOIN_URL} class="join mt-4 inline-block text-xl font-bold">
+              Join the ring
+            </a>
+          </section>
+        )
+      }
+
+      {
+        hasControls && (
+          <div
+            class="controls flex flex-wrap items-end gap-x-6 gap-y-4 pb-8"
+            data-directory-controls
+            hidden
+          >
+            <div class="grid min-w-0 flex-[1_1_18rem] gap-2 sm:max-w-md">
+              <label for="member-search" class="text-sm font-bold">
+                Search Members
+              </label>
+              <input
+                id="member-search"
+                type="search"
+                autocomplete="off"
+                spellcheck="false"
+                placeholder="Name, Site, GitHub or year"
+                class="search min-h-11 w-full border-2 border-ink bg-surface px-3 py-2 text-base text-ink placeholder:text-ink-muted"
+              />
+            </div>
+            <div class="seg flex border-2 border-ink" role="group" aria-label="Order">
+              <button type="button" data-view-button="year" aria-pressed="true">
+                By year
+              </button>
+              <button type="button" data-view-button="az" aria-pressed="false">
+                A-Z
+              </button>
+            </div>
+            <a href={url('/ring/random')} class="random inline-flex min-h-11 items-center gap-2 whitespace-nowrap bg-accent px-4 font-extrabold text-on-accent">
+              <Icon name="shuffle" class="text-xl" />
+              Random Site
+            </a>
+          </div>
+        )
+      }
+
+      {
+        hasMembers && (
+          <div class="roster-wrap">
+            <p class="sr-only" role="status" data-search-status />
+
+            <div data-view="year">
+              {bands.map(({ graduationYear, members: bandMembers }) => (
+                <section class="band" aria-labelledby={`year-${graduationYear}`} data-band>
+                  <h2 id={`year-${graduationYear}`} class="band-year">
+                    <span class="sr-only">Graduation Year </span>
+                    <span class="band-num">{graduationYear}</span>
+                  </h2>
+                  <ul class="roster" role="list">
+                    {rows(bandMembers).map(({ member, domain, standing, search }) => (
+                      <li class="row" data-member data-search={search}>
+                        <div class="who">
+                          <a class="name" href={member.site}>
+                            {member.name}
+                          </a>
+                          {standing && <span class="standing">{standing}</span>}
+                          {member.tagline && <p class="tagline">{member.tagline}</p>}
+                        </div>
+                        <span class="site">{domain}</span>
+                        <a class="gh" href={`https://github.com/${member.github}`}>
+                          @{member.github}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ))}
+            </div>
+
+            {hasControls && (
+              <div data-view="az" hidden>
+                <ul class="roster az" role="list" aria-label="Members, A-Z">
+                  {rows(alphabetical).map(({ member, domain, standing, search }) => (
+                    <li class="row" data-member data-search={search}>
+                      <span class="row-year">
+                        <span class="sr-only">Graduation Year </span>
+                        {member.graduationYear}
+                      </span>
+                      <div class="who">
+                        <a class="name" href={member.site}>
+                          {member.name}
+                        </a>
+                        {standing && <span class="standing">{standing}</span>}
+                        {member.tagline && <p class="tagline">{member.tagline}</p>}
+                      </div>
+                      <span class="site">{domain}</span>
+                      <a class="gh" href={`https://github.com/${member.github}`}>
+                        @{member.github}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {hasControls && (
+              <div class="border-t-2 border-ink py-12 md:py-16" data-no-results hidden>
+                <p class="text-2xl font-bold break-words sm:text-3xl">
+                  No Members match “<span data-no-results-query />”
+                </p>
+                <button type="button" class="clear mt-6 min-h-11 border-2 border-ink px-4 font-bold" data-clear-search>
+                  Clear search
+                </button>
+              </div>
+            )}
+          </div>
+        )
+      }
     </main>
 
-    <footer class="flex flex-col gap-2 border-t border-line py-6 text-sm text-ink-muted sm:flex-row sm:items-center sm:justify-between">
+    <footer class="mt-20 flex flex-col gap-2 border-t border-line py-8 text-sm text-ink-muted sm:flex-row sm:items-center sm:justify-between">
       <p>Eagle Ring is unofficial and student-run. Not affiliated with Houston City College.</p>
-      <a
-        href={repoUrl}
-        class="font-mono text-ink underline decoration-accent decoration-2 underline-offset-4 motion-safe:transition-colors hover:text-accent-ink"
-      >
-        Source on GitHub
-      </a>
+      <a href={REPO_URL} class="source font-mono text-ink">Source on GitHub</a>
     </footer>
   </div>
 </Base>
+
+<style>
+  /* The one call to action and the footer link: a yellow bar under the text
+     that fills behind it on hover. Yellow is a fill here, never the text. */
+  .join,
+  .source {
+    background: linear-gradient(var(--er-accent), var(--er-accent)) 0 100% / 100% 3px no-repeat;
+    padding-bottom: 2px;
+  }
+  .join:hover,
+  .source:hover {
+    background-size: 100% 100%;
+    color: var(--er-on-accent);
+  }
+
+  /* Controls */
+  .seg button {
+    min-height: 2.75rem;
+    padding: 0 1rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .seg button[aria-pressed='true'] {
+    background: var(--er-ink);
+    color: var(--er-surface);
+  }
+  .seg button[aria-pressed='false']:hover,
+  .clear:hover {
+    background: var(--er-surface-soft);
+  }
+  .random:hover {
+    box-shadow: inset 0 0 0 2px var(--er-on-accent);
+  }
+  .clear {
+    cursor: pointer;
+  }
+
+  /* Year bands: the full year once per band, left of the rows from lg up,
+     stacked above them below that. */
+  .band {
+    display: grid;
+    gap: 1rem 3rem;
+    padding: 2rem 0 2.5rem;
+  }
+  @media (min-width: 1024px) {
+    .band {
+      grid-template-columns: 13rem minmax(0, 1fr);
+      padding: 2.5rem 0 3rem;
+    }
+  }
+  .band-num {
+    display: inline-block;
+    font-weight: 800;
+    font-size: clamp(3.5rem, 8vw, 6.5rem);
+    line-height: 0.85;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+    box-shadow: inset 0 -0.12em 0 var(--er-accent);
+    padding-bottom: 0.06em;
+  }
+  @media (min-width: 1024px) {
+    .band-year {
+      position: sticky;
+      top: 1.5rem;
+      align-self: start;
+    }
+  }
+
+  /* Rows: full width, hairlines between, no cards. */
+  .roster {
+    border-top: 2px solid var(--er-ink);
+  }
+  .row {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.25rem 1.5rem;
+    align-items: baseline;
+    padding: 1rem 0.5rem;
+    border-bottom: 1px solid var(--er-line);
+  }
+  @media (min-width: 768px) {
+    .row {
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 12rem);
+    }
+  }
+  .row:hover {
+    background: var(--er-surface-soft);
+  }
+
+  .name {
+    font-weight: 800;
+    font-size: 1.375rem;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    text-decoration-thickness: 4px;
+    text-underline-offset: 4px;
+  }
+  .row:hover .name {
+    text-decoration-color: var(--er-accent);
+  }
+  /* The whole row links to the Site. */
+  .name::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+  /* Focus rings the whole row, since the whole row is the link. */
+  .name:focus-visible {
+    outline: none;
+    box-shadow: none;
+  }
+  .name:focus-visible::after {
+    outline: 3px solid var(--er-accent);
+    outline-offset: -3px;
+    box-shadow: inset 0 0 0 6px var(--er-ink);
+  }
+  .standing {
+    margin-left: 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--er-ink-muted);
+    white-space: nowrap;
+  }
+  .tagline {
+    margin-top: 0.25rem;
+    max-width: 60ch;
+    color: var(--er-ink-muted);
+  }
+  .site,
+  .gh {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    overflow-wrap: anywhere;
+  }
+  .gh {
+    /* Above the row's link layer, so it stays separately clickable. */
+    position: relative;
+    z-index: 1;
+    justify-self: start;
+    color: var(--er-ink-muted);
+  }
+  .gh:hover {
+    color: var(--er-ink);
+    text-decoration: underline;
+    text-decoration-color: var(--er-accent);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+  }
+
+  /* A-Z: one roster, the full year at the start of each row. */
+  .az .row {
+    grid-template-columns: 4.75rem minmax(0, 1fr);
+    column-gap: 1rem;
+  }
+  .az .row > :not(.row-year) {
+    grid-column: 2;
+  }
+  .az .row-year {
+    grid-row: 1 / span 3;
+    font-weight: 800;
+    font-size: 1.75rem;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+  @media (min-width: 768px) {
+    .az .row {
+      grid-template-columns: 7rem minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 12rem);
+      column-gap: 1.5rem;
+    }
+    .az .row > :not(.row-year) {
+      grid-column: auto;
+    }
+    .az .row-year {
+      grid-row: auto;
+      font-size: 2.25rem;
+    }
+  }
+
+  /* Motion: small hover and press transitions only (MOTION_INTENSITY 3). */
+  @media (prefers-reduced-motion: no-preference) {
+    .join,
+    .source {
+      transition:
+        background-size 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+        color 0.2s ease;
+    }
+    .row,
+    .seg button[aria-pressed='false'],
+    .clear {
+      transition: background-color 0.15s ease;
+    }
+    .name,
+    .gh {
+      transition:
+        text-decoration-color 0.15s ease,
+        color 0.15s ease;
+    }
+    .random {
+      transition:
+        transform 0.1s ease,
+        box-shadow 0.15s ease;
+    }
+    .random:active,
+    .seg button:active,
+    .clear:active {
+      transform: translateY(1px);
+    }
+  }
+</style>
+
+<script>
+  // Search, the By year / A-Z toggle and Random Site. Without this script the
+  // page is the plain By-year roster (spec §5, "Without JavaScript").
+  const controls = document.querySelector<HTMLElement>('[data-directory-controls]')
+
+  if (controls) {
+    const input = controls.querySelector<HTMLInputElement>('#member-search')!
+    const buttons = [...controls.querySelectorAll<HTMLButtonElement>('[data-view-button]')]
+    const views = [...document.querySelectorAll<HTMLElement>('[data-view]')]
+    const rows = [...document.querySelectorAll<HTMLElement>('[data-member]')]
+    const bands = [...document.querySelectorAll<HTMLElement>('[data-band]')]
+    const noResults = document.querySelector<HTMLElement>('[data-no-results]')!
+    const noResultsQuery = document.querySelector<HTMLElement>('[data-no-results-query]')!
+    const status = document.querySelector<HTMLElement>('[data-search-status]')!
+    const total = rows.length / views.length
+
+    let view = 'year'
+
+    const normalise = (text: string) =>
+      text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
+
+    function update() {
+      const query = input.value.trim()
+      const terms = normalise(query).split(/\s+/).filter(Boolean)
+      let shown = 0
+      for (const row of rows) {
+        const text = row.dataset.search ?? ''
+        const match = terms.every((term) => text.includes(term))
+        row.hidden = !match
+        if (match && row.closest<HTMLElement>('[data-view]')?.dataset.view === view) shown++
+      }
+      for (const band of bands) {
+        band.hidden = !band.querySelector('[data-member]:not([hidden])')
+      }
+      for (const el of views) el.hidden = shown === 0 || el.dataset.view !== view
+      noResults.hidden = shown > 0
+      noResultsQuery.textContent = query
+      for (const button of buttons) {
+        button.setAttribute('aria-pressed', String(button.dataset.viewButton === view))
+      }
+      status.textContent =
+        terms.length === 0 ? '' : `${shown} of ${total} ${total === 1 ? 'Member' : 'Members'} shown`
+    }
+
+    input.addEventListener('input', update)
+    for (const button of buttons) {
+      button.addEventListener('click', () => {
+        view = button.dataset.viewButton ?? 'year'
+        update()
+      })
+    }
+    document.querySelector('[data-clear-search]')!.addEventListener('click', () => {
+      input.value = ''
+      update()
+      input.focus()
+    })
+
+    controls.hidden = false
+    update()
+  }
+</script>
