@@ -1,0 +1,33 @@
+---
+// Ring Widget prev/next (spec §6): `ring/<slug>/prev.html` and `next.html`
+// for every Member, each a zero-second meta refresh to the neighbouring Site.
+// A client-side hop (HTTP 200), with a visible link in case refresh is off.
+import { members } from '../../../lib/members'
+import { DIRECTIONS, neighbourSite, type Direction } from '../../../lib/ring'
+import { absoluteUrl } from '../../../lib/url'
+
+export function getStaticPaths() {
+  return members.flatMap(({ slug }) =>
+    DIRECTIONS.map((direction) => ({ params: { slug, direction } })),
+  )
+}
+
+const { slug, direction } = Astro.params as { slug: string; direction: Direction }
+const target = neighbourSite(members, slug, direction, absoluteUrl())
+const label = direction === 'next' ? 'next' : 'previous'
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <link rel="canonical" href={target} />
+    <meta http-equiv="refresh" content={`0;url=${target}`} />
+    <title>Eagle Ring: {label} Site</title>
+  </head>
+  <body>
+    <p>Going to the {label} Site in Eagle Ring: <a href={target}>{target}</a></p>
+  </body>
+</html>
