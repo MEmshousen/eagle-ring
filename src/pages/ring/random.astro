@@ -1,0 +1,29 @@
+---
+// Ring Widget random (spec §6): `ring/random.html?from=<slug>` jumps to a
+// random Site other than `from`, or to the Directory when no one else is in
+// the ring. The only ring page that needs JavaScript.
+import { members } from '../../lib/members'
+import { inlineScript, scriptJson } from '../../lib/ring'
+import { absoluteUrl, url } from '../../lib/url'
+
+const ring = members.map(({ slug, site }) => ({ slug, site }))
+const script = inlineScript(
+  `location.replace(randomSite(${scriptJson(ring)}, new URLSearchParams(location.search).get('from'), ${scriptJson(absoluteUrl())}, Math.random));`,
+)
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Eagle Ring: random Site</title>
+  </head>
+  <body>
+    <noscript>
+      <p>Random needs JavaScript. <a href={url()}>Browse the Directory</a> instead.</p>
+    </noscript>
+    <script is:inline set:html={script} />
+  </body>
+</html>

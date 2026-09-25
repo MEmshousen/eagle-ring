@@ -1,0 +1,33 @@
+---
+// GitHub Pages serves this for every missing path (spec §6). A removed
+// Member's stale widget (`ring/<slug>/prev` or `next`) is sent on to the
+// neighbour of where that slug would sit in the ring; anything else gets a
+// link to the Directory.
+import Base from '../layouts/Base.astro'
+import { members } from '../lib/members'
+import { inlineScript, scriptJson } from '../lib/ring'
+import { absoluteUrl, url } from '../lib/url'
+
+const ring = members.map(({ slug, site }) => ({ slug, site }))
+const script = inlineScript(
+  `const target = fallbackTarget(${scriptJson(ring)}, location.pathname, ${scriptJson(url('ring'))}, ${scriptJson(absoluteUrl())});
+if (target) location.replace(target);`,
+)
+---
+
+<Base title="Eagle Ring: page not found">
+  <script is:inline set:html={script} />
+  <main class="mx-auto flex min-h-[100dvh] max-w-6xl flex-col justify-center gap-6 px-4 py-16 sm:px-8">
+    <p class="font-mono text-sm text-ink-muted">404</p>
+    <h1 class="font-display text-5xl leading-[1.1] font-extrabold tracking-tighter sm:text-7xl">
+      <span class="inline-block border-b-[0.12em] border-accent pb-[0.04em]">Not in the ring</span>
+    </h1>
+    <p class="max-w-[40ch] text-xl leading-snug text-ink">
+      This page isn't part of Eagle Ring.{' '}
+      <a
+        href={url()}
+        class="font-medium underline decoration-accent decoration-2 underline-offset-4 motion-safe:transition-colors hover:text-accent-ink"
+      >Go to the Directory</a>.
+    </p>
+  </main>
+</Base>
