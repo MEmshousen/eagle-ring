@@ -1,0 +1,6 @@
+# expect-field: status
+name: "Kevin Tran"
+site: "https://kevintran.github.io/"
+graduationYear: 2028
+github: "kvtran"
+status: "graduated"
