@@ -1,0 +1,18 @@
+# Example Member file. Copy it to src/content/members/<your-slug>.yaml
+# (the filename is your slug, for example kevin-tran.yaml) and change every
+# value to your own. Lines starting with # are comments; you can delete them.
+# Every rule is in CONTRIBUTING.md, section 4.
+
+# Required. Your name as you want it shown, 1 to 60 characters.
+name: Kevin Tran
+# Required. Your Site. Starts with https://, with no ? or # part.
+site: https://kevintran.github.io/
+# Required. The year you graduated, expect to graduate, or left. No quotes.
+graduationYear: 2023
+# Required. Your GitHub handle, without the @.
+github: kvtran
+# Optional. One line of plain text, at most 80 characters. No links.
+tagline: Data analyst. Plots things in R.
+# Optional. Your Standing: graduated, transferred or attended.
+# Leave it out if your Graduation Year is still in the future.
+status: transferred
