@@ -291,6 +291,10 @@ Open a new PR that changes your own file, from the GitHub account named in its `
 
 The Maintainer only removes a record when the Site has been down for 30 days or more, its content is inappropriate, or the Member isn't eligible. They'll @-mention you on the removal PR.
 
+### Your details and the licence
+
+The Eagle Ring code is under the MIT License, but your Member file isn't. Your file is used only to list you in Eagle Ring, and the [LICENSE](LICENSE) file says so explicitly. If you leave, your file is deleted from the Directory. Like every file in a public repo, older versions stay visible in the git history.
+
 ## 8. Contacting the Maintainer
 
 - For questions or problems, [open an issue](https://github.com/jpierre-7/eagle-ring/issues/new) on the repo. An **issue** is a public discussion thread on GitHub.
