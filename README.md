@@ -65,6 +65,10 @@ Decisions were worked out as GitHub issues before the build; the spec's decision
 
 [@jpierre-7](https://github.com/jpierre-7) reviews and merges Submissions. `.github/CODEOWNERS` names the Maintainer, so handing Eagle Ring over to a CS club later is a one-line change there. Questions or problems: [open an issue](https://github.com/jpierre-7/eagle-ring/issues/new).
 
+## Licence
+
+The code and docs are under the [MIT License](LICENSE), so another school is welcome to fork this and run its own ring. Member data isn't: the files in `src/content/members/` are people's own details, shared only to be listed here, and aren't licensed for any other use. If you start your own ring from this code, begin with an empty `src/content/members/` folder. The fonts keep their own licence (the SIL Open Font License); see [LICENSE](LICENSE) for the full scope.
+
 ## Credits
 
 Fonts: [Bricolage Grotesque](https://github.com/ateliertriay/bricolage) and [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono), both under the SIL Open Font License (licence files next to the fonts in `src/assets/fonts/`). Icons: [Phosphor](https://phosphoricons.com).
